@@ -108,7 +108,9 @@ export function ensureTopbar(): void {
     const alreadyMounted =
       mountEl !== null &&
       document.contains(mountEl) &&
-      (targetContainer ? mountEl.parentElement === targetContainer : mountEl.parentElement === document.body && floating);
+      (targetContainer
+        ? mountEl.parentElement === targetContainer
+        : mountEl.parentElement === document.body && floating);
     if (alreadyMounted) {
       updateCount();
       return;
@@ -125,7 +127,7 @@ export function updateCount(): void {
   syncCurrentPage();
   const page = getCurrentPage();
   const n = filteredCount();
-  countBtn.textContent = isFilterablePage(page) ? '已过滤 (' + n + ')' : 'LinuxDo 降噪';
+  countBtn.textContent = isFilterablePage(page) ? `已过滤 (${n})` : 'LinuxDo 降噪';
   countBtn.title = isFilterablePage(page) ? '查看本页被过滤的主题' : '打开降噪设置';
 }
 

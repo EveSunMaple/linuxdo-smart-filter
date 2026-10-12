@@ -83,5 +83,5 @@ export function defaultPresets(): Rule[] {
 }
 
 export function newRuleId(): string {
-  return 'rule-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+  return `rule-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }

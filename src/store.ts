@@ -1,6 +1,6 @@
-import type { Config, Exemptions, Lexicons, Rule } from './types';
 import { defaultLexicons } from './lexicons';
 import { defaultPresets } from './presets';
+import type { Config, Exemptions, Lexicons, Rule } from './types';
 
 const KEY = 'ldf_config_v1';
 const CONFIG_VERSION = 1;
@@ -123,7 +123,7 @@ export function importJSON(text: string): { ok: true } | { ok: false; error: str
   try {
     parsed = JSON.parse(text);
   } catch (e) {
-    return { ok: false, error: 'JSON 解析失败：' + (e as Error).message };
+    return { ok: false, error: `JSON 解析失败：${(e as Error).message}` };
   }
   if (!parsed || typeof parsed !== 'object') return { ok: false, error: '内容不是对象' };
   const r = parsed as Partial<Config>;

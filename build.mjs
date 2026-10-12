@@ -1,5 +1,5 @@
+import { mkdirSync, readFileSync } from 'node:fs';
 import { build, context } from 'esbuild';
-import { readFileSync, mkdirSync } from 'node:fs';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 

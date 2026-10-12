@@ -36,20 +36,38 @@ function render(): void {
       const t = e.topic;
       const cat = categoryNameOf(map, t.category_id);
       const catLink = categoryHref(map, t.category_id);
-      const tags = (t.tags || [])
-        .map((x) => '<span class="ldf-item-badge">' + escHtml(x.name) + '</span>')
-        .join(' ');
+      const tags = (t.tags || []).map((x) => `<span class="ldf-item-badge">${escHtml(x.name)}</span>`).join(' ');
       const replies = Math.max(0, (t.posts_count || 0) - 1);
       return (
-        '<div class="ldf-item" data-idx="' + i + '">' +
-        '<a class="ldf-item-title" target="_blank" rel="noopener" href="/t/topic/' + t.id + '/1">' + escHtml(t.title) + '</a>' +
+        '<div class="ldf-item" data-idx="' +
+        i +
+        '">' +
+        '<a class="ldf-item-title" target="_blank" rel="noopener" href="/t/topic/' +
+        t.id +
+        '/1">' +
+        escHtml(t.title) +
+        '</a>' +
         '<div class="ldf-item-meta">' +
-        '<a class="ldf-item-cat" href="' + catLink + '" target="_blank" rel="noopener">' + escHtml(cat) + '</a>' +
+        '<a class="ldf-item-cat" href="' +
+        catLink +
+        '" target="_blank" rel="noopener">' +
+        escHtml(cat) +
+        '</a>' +
         tags +
-        '<span>回复 ' + replies + ' · 浏览 ' + (t.views || 0) + '</span>' +
+        '<span>回复 ' +
+        replies +
+        ' · 浏览 ' +
+        (t.views || 0) +
+        '</span>' +
         '</div>' +
-        '<div class="ldf-item-reason">命中「' + escHtml(e.ruleName) + '」' + (e.reason ? ' · ' + escHtml(e.reason) : '') + '</div>' +
-        '<div class="ldf-item-actions"><button type="button" class="ldf-btn ldf-exempt" data-id="' + t.id + '">豁免此帖</button></div>' +
+        '<div class="ldf-item-reason">命中「' +
+        escHtml(e.ruleName) +
+        '」' +
+        (e.reason ? ` · ${escHtml(e.reason)}` : '') +
+        '</div>' +
+        '<div class="ldf-item-actions"><button type="button" class="ldf-btn ldf-exempt" data-id="' +
+        t.id +
+        '">豁免此帖</button></div>' +
         '</div>'
       );
     })

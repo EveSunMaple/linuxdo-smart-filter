@@ -1,5 +1,5 @@
-import type { Config, FilteredEntry } from './types';
 import type { CategoryMap } from './page';
+import type { Config, FilteredEntry } from './types';
 
 export interface AppContext {
   getConfig(): Config;

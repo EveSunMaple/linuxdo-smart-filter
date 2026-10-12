@@ -1,6 +1,6 @@
-import type { Decision, Exemptions, Lexicons, PageInfo, Rule, Signals, Topic } from './types';
 import { extractSignals, hasTag } from './classify';
-import { resolveCategoryNames, type CategoryMap } from './page';
+import { type CategoryMap, resolveCategoryNames } from './page';
+import type { Decision, Exemptions, Lexicons, PageInfo, Rule, Signals, Topic } from './types';
 
 export interface CompiledRule {
   rule: Rule;
@@ -54,14 +54,14 @@ function compileOne(rule: Rule, index: number, map: CategoryMap | null): Compile
     compiled.compileError = '规则没有任何匹配条件';
     return compiled;
   }
-  if (w.categoryNames && w.categoryNames.length) {
+  if (w.categoryNames?.length) {
     const { ids, missing } = resolveCategoryNames(w.categoryNames, map);
     if (!map) {
       compiled.compileError = '板块映射未就绪';
       return compiled;
     }
     if (missing.length) {
-      compiled.compileError = '找不到板块：' + missing.join('、');
+      compiled.compileError = `找不到板块：${missing.join('、')}`;
       return compiled;
     }
     compiled.categoryIds = ids;
@@ -77,8 +77,8 @@ function compileOne(rule: Rule, index: number, map: CategoryMap | null): Compile
   for (const src of w.titleRegexAny || []) {
     try {
       compiled.regexes.push(new RegExp(src, 'i'));
-    } catch (e) {
-      compiled.compileError = '正则无效：' + src;
+    } catch (_e) {
+      compiled.compileError = `正则无效：${src}`;
       return compiled;
     }
   }
@@ -117,10 +117,10 @@ function matchRule(c: CompiledRule, topic: Topic, sig: Signals): boolean {
   if (c.compileError) return false;
   const w = c.rule.when || {};
   if (c.categoryIds && !c.categoryIds.has(topic.category_id)) return false;
-  if (w.tagsAny && w.tagsAny.length) {
+  if (w.tagsAny?.length) {
     if (!hasTag(topic, w.tagsAny)) return false;
   }
-  if (w.tagsNone && w.tagsNone.length) {
+  if (w.tagsNone?.length) {
     if (hasTag(topic, w.tagsNone)) return false;
   }
   if (w.minAsk != null && sig.askHits.length < w.minAsk) return false;
@@ -136,21 +136,21 @@ function matchRule(c: CompiledRule, topic: Topic, sig: Signals): boolean {
 
 function fmtHits(hits: string[]): string {
   const shown = hits.slice(0, 4);
-  return '×' + hits.length + '（' + shown.join('、') + (hits.length > shown.length ? '…' : '') + '）';
+  return `×${hits.length}（${shown.join('、')}${hits.length > shown.length ? '…' : ''}）`;
 }
 
 function buildReason(c: CompiledRule, topic: Topic, sig: Signals): string {
   const parts: string[] = [];
   const w = c.rule.when || {};
-  if (w.tagsAny && w.tagsAny.length) {
+  if (w.tagsAny?.length) {
     const tag = hasTag(topic, w.tagsAny);
-    if (tag) parts.push('标签「' + tag + '」');
+    if (tag) parts.push(`标签「${tag}」`);
   }
   if (c.categoryIds) parts.push('板块命中');
-  if (w.minAsk != null && sig.askHits.length) parts.push('提问词 ' + fmtHits(sig.askHits));
-  if (w.minBuzz != null && sig.buzzHits.length) parts.push('主题词 ' + fmtHits(sig.buzzHits));
-  if (w.minShield != null && sig.shieldHits.length) parts.push('优质词 ' + fmtHits(sig.shieldHits));
-  if (w.titleMaxLen != null || w.titleMinLen != null) parts.push('标题长度 ' + sig.titleLen);
+  if (w.minAsk != null && sig.askHits.length) parts.push(`提问词 ${fmtHits(sig.askHits)}`);
+  if (w.minBuzz != null && sig.buzzHits.length) parts.push(`主题词 ${fmtHits(sig.buzzHits)}`);
+  if (w.minShield != null && sig.shieldHits.length) parts.push(`优质词 ${fmtHits(sig.shieldHits)}`);
+  if (w.titleMaxLen != null || w.titleMinLen != null) parts.push(`标题长度 ${sig.titleLen}`);
   if (c.regexes.length) parts.push('标题正则');
   return parts.join(' + ') || '条件命中';
 }

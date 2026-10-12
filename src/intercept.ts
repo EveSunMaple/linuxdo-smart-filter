@@ -1,7 +1,7 @@
-import type { Config, FilteredEntry, PageInfo, Topic, TopicTag } from './types';
 import type { CompiledState, DecideCtx } from './engine';
 import { decide, pageHasActiveRule } from './engine';
-import { buildCategoryMap, isFilterablePage, pageContext, type CategoryMap } from './page';
+import { buildCategoryMap, type CategoryMap, isFilterablePage, pageContext } from './page';
+import type { Config, FilteredEntry, PageInfo, Topic, TopicTag } from './types';
 
 const BUCKET_MAX = 1000;
 
@@ -72,7 +72,10 @@ export function syncCurrentPage(): void {
   currentPage = pageContext(location.href);
 }
 
-export function processTopicList(pg: PageInfo, obj: unknown): { kept: number; filtered: number; highlights: number } | null {
+export function processTopicList(
+  pg: PageInfo,
+  obj: unknown,
+): { kept: number; filtered: number; highlights: number } | null {
   if (!host) return null;
   const rec = obj as { topic_list?: { topics?: unknown[] } };
   const tl = rec.topic_list;
@@ -211,11 +214,11 @@ function domPass(): void {
   document.querySelectorAll<HTMLElement>('tr[data-topic-id]').forEach((row) => {
     const id = parseInt(row.getAttribute('data-topic-id') || '', 10);
     if (!Number.isFinite(id)) return;
-    if (bucket && bucket.map.has(id)) {
+    if (bucket?.map.has(id)) {
       hideRow(row);
       return;
     }
-    if (hlMap && hlMap.has(id)) {
+    if (hlMap?.has(id)) {
       paintRow(row, hlMap.get(id)!);
       return;
     }
@@ -233,7 +236,7 @@ function domPass(): void {
       addToBucket(currentPage.key, { topic, ruleName: d.rule.name, reason: d.reason, time: Date.now() });
       bucketChanged = true;
       hideRow(row);
-      if (cfg.debug) host!.log('DOM兜底过滤', topic.title, '=>', d.rule.name, d.reason);
+      if (cfg.debug) host?.log('DOM兜底过滤', topic.title, '=>', d.rule.name, d.reason);
     } else if (d.kind === 'highlight') {
       decided.set(id, { kind: 'highlight', color: d.color });
       let m = pageHighlights.get(currentPage.key);
@@ -250,7 +253,7 @@ function domPass(): void {
 
   if (bucketChanged) host.onBucketChange();
 
-  if (bucket && bucket.order.length) {
+  if (bucket?.order.length) {
     const body = document.querySelector('.topic-list-body');
     if (body) {
       const rows = body.querySelectorAll<HTMLElement>('tr[data-topic-id]');
@@ -324,13 +327,14 @@ function hookPreload(): void {
 
 function hookFetch(): void {
   if (typeof nativeFetch !== 'function') return;
+  const native = nativeFetch;
   window.fetch = function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const pg = pageContext(url);
     if (!host || !isFilterablePage(pg) || !pageHasActiveRule(host.getState(), pg)) {
-      return nativeFetch!.apply(this, [input, init] as Parameters<typeof fetch>);
+      return native.apply(this, [input, init] as Parameters<typeof fetch>);
     }
-    return nativeFetch!.apply(this, [input, init] as Parameters<typeof fetch>).then((resp) => {
+    return native.apply(this, [input, init] as Parameters<typeof fetch>).then((resp) => {
       const ct = resp.headers.get('content-type') || '';
       if (ct.indexOf('json') === -1) return resp;
       return resp
@@ -348,7 +352,7 @@ function hookFetch(): void {
               headers: resp.headers,
             });
           } catch (e) {
-            host!.log('fetch 过滤失败', e);
+            host?.log('fetch 过滤失败', e);
             return resp;
           }
         });
@@ -362,11 +366,19 @@ function hookXHR(): void {
   const send = XHR.prototype.send;
   const descText = Object.getOwnPropertyDescriptor(XHR.prototype, 'responseText');
   const descResp = Object.getOwnPropertyDescriptor(XHR.prototype, 'response');
-  XHR.prototype.open = function (this: XMLHttpRequest & { __ldfUrl?: string }, method: string, url: string | URL, ...rest: unknown[]) {
+  XHR.prototype.open = function (
+    this: XMLHttpRequest & { __ldfUrl?: string },
+    method: string,
+    url: string | URL,
+    ...rest: unknown[]
+  ) {
     this.__ldfUrl = String(url);
     return (open as (...args: unknown[]) => void).apply(this, [method, url, ...rest]);
   };
-  XHR.prototype.send = function (this: XMLHttpRequest & { __ldfUrl?: string; __ldfCache?: string }, ...args: unknown[]) {
+  XHR.prototype.send = function (
+    this: XMLHttpRequest & { __ldfUrl?: string; __ldfCache?: string },
+    ...args: unknown[]
+  ) {
     const pg = pageContext(this.__ldfUrl || '');
     if (host && descText && isFilterablePage(pg) && pageHasActiveRule(host.getState(), pg)) {
       const xhr = this;
@@ -376,7 +388,7 @@ function hookXHR(): void {
           Object.defineProperty(xhr, 'responseText', {
             configurable: true,
             get(): string {
-              const orig = descText.get!.call(xhr) as string;
+              const orig = descText.get?.call(xhr) as string;
               if (xhr.__ldfCache !== undefined) return xhr.__ldfCache;
               if (!looksLikeTopicList(orig)) {
                 xhr.__ldfCache = orig;
@@ -392,7 +404,7 @@ function hookXHR(): void {
                 xhr.__ldfCache = JSON.stringify(obj);
                 return xhr.__ldfCache;
               } catch (e) {
-                host!.log('XHR 过滤失败', e);
+                host?.log('XHR 过滤失败', e);
                 xhr.__ldfCache = orig;
                 return orig;
               }
@@ -403,12 +415,12 @@ function hookXHR(): void {
               configurable: true,
               get(): unknown {
                 if (xhr.responseType === '' || xhr.responseType === 'text') return xhr.responseText;
-                return descResp.get!.call(xhr);
+                return descResp.get?.call(xhr);
               },
             });
           }
         } catch (e) {
-          host!.log('XHR responseText 劫持失败', e);
+          host?.log('XHR responseText 劫持失败', e);
         }
       };
       xhr.addEventListener('readystatechange', () => {
@@ -428,8 +440,8 @@ function hookDom(): void {
 
 function hookHistory(): void {
   const wrap = (fn: History['pushState']): History['pushState'] =>
-    function (this: History) {
-      const r = fn.apply(this, arguments as unknown as Parameters<History['pushState']>);
+    function (this: History, ...args: Parameters<History['pushState']>) {
+      const r = fn.apply(this, args);
       syncCurrentPage();
       scheduleDomPass();
       return r;

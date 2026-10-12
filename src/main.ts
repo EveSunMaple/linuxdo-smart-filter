@@ -1,14 +1,14 @@
-import { setApp, type AppContext } from './context';
-import { getConfig, loadConfig, saveConfig } from './store';
-import { compileRules, type CompiledState } from './engine';
+import { type AppContext, setApp } from './context';
+import { type CompiledState, compileRules } from './engine';
 import type { Host } from './intercept';
 import { currentFilteredEntries, installInterceptors, syncCurrentPage } from './intercept';
+import type { CategoryMap } from './page';
+import { getConfig, loadConfig, saveConfig } from './store';
 import { injectStyles, toast } from './ui/common';
-import { CSS } from './ui/styles';
-import { ensureTopbar, installTopbarListeners, updateCount } from './ui/topbar';
 import { openDrawer } from './ui/drawer';
 import { openSettings } from './ui/settings';
-import type { CategoryMap } from './page';
+import { CSS } from './ui/styles';
+import { ensureTopbar, installTopbarListeners, updateCount } from './ui/topbar';
 
 let catMap: CategoryMap | null = null;
 let compiled: CompiledState = { rules: [], errors: new Map() };
@@ -71,7 +71,7 @@ function boot(): void {
   const onReady = (): void => {
     syncCurrentPage();
     ensureTopbar();
-    if (getConfig().debug) console.log('%c[LD-SF]', 'color:#3aa', '启动完成 v' + __LDF_VERSION__);
+    if (getConfig().debug) console.log('%c[LD-SF]', 'color:#3aa', `启动完成 v${__LDF_VERSION__}`);
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady, { once: true });
   else onReady();
@@ -85,7 +85,7 @@ function boot(): void {
       saveConfig();
       recompile();
       updateCount();
-      toast('降噪已' + (cfg.masterEnabled ? '启用' : '暂停') + '，刷新页面后生效');
+      toast(`降噪已${cfg.masterEnabled ? '启用' : '暂停'}，刷新页面后生效`);
     });
   } catch {
     /* menu command unavailable */

@@ -22,19 +22,19 @@ export function pageContext(href: string): PageInfo {
     if (catParam) {
       const id = parseInt(catParam[1], 10);
       const f = (/[?&]order=([a-z]+)/i.exec(url.search) || [])[1] || 'latest';
-      return { kind: 'category', categoryId: id, filter: f.toLowerCase(), key: 'cat:' + id + ':' + f.toLowerCase() };
+      return { kind: 'category', categoryId: id, filter: f.toLowerCase(), key: `cat:${id}:${f.toLowerCase()}` };
     }
     if (url.pathname === '/' || url.pathname === '') return { kind: 'home', route: 'latest', key: 'home:latest' };
-    const hm = new RegExp('^/(' + HOME_ROUTES.join('|') + ')(\\.json)?(/.*)?$', 'i').exec(url.pathname);
+    const hm = new RegExp(`^/(${HOME_ROUTES.join('|')})(\\.json)?(/.*)?$`, 'i').exec(url.pathname);
     if (hm) {
       const route = hm[1].toLowerCase();
-      return { kind: 'home', route, key: 'home:' + route };
+      return { kind: 'home', route, key: `home:${route}` };
     }
     const cm = /^\/c\/[^/]+(?:\/[^/]+)?\/(\d+)(?:\/l\/([a-z]+))?/i.exec(url.pathname);
     if (cm) {
       const id = parseInt(cm[1], 10);
       const f = (cm[2] || 'latest').toLowerCase();
-      return { kind: 'category', categoryId: id, filter: f, key: 'cat:' + id + ':' + f };
+      return { kind: 'category', categoryId: id, filter: f, key: `cat:${id}:${f}` };
     }
     return { kind: 'other', key: 'other' };
   } catch {
@@ -61,24 +61,27 @@ export function buildCategoryMap(categories: unknown): CategoryMap | null {
     };
     byId.set(rec.id, rec);
     if (!byName.has(rec.name)) byName.set(rec.name, []);
-    byName.get(rec.name)!.push(rec);
+    byName.get(rec.name)?.push(rec);
   }
   for (const rec of byId.values()) {
     if (rec.parentId == null) continue;
     if (!childrenOf.has(rec.parentId)) childrenOf.set(rec.parentId, []);
-    childrenOf.get(rec.parentId)!.push(rec.id);
+    childrenOf.get(rec.parentId)?.push(rec.id);
   }
   if (!byId.size) return null;
   return { byId, byName, childrenOf };
 }
 
-export function resolveCategoryNames(names: string[], map: CategoryMap | null): { ids: Set<number>; missing: string[] } {
+export function resolveCategoryNames(
+  names: string[],
+  map: CategoryMap | null,
+): { ids: Set<number>; missing: string[] } {
   const ids = new Set<number>();
   const missing: string[] = [];
   if (!map) return { ids, missing: [...names] };
   for (const name of names) {
     const cands = map.byName.get(name);
-    if (!cands || !cands.length) {
+    if (!cands?.length) {
       missing.push(name);
       continue;
     }
@@ -96,7 +99,7 @@ export function resolveCategoryNames(names: string[], map: CategoryMap | null): 
 
 export function categoryNameOf(map: CategoryMap | null, id: number): string {
   const rec = map?.byId.get(id);
-  return rec ? rec.name : '#' + id;
+  return rec ? rec.name : `#${id}`;
 }
 
 export function categoryHref(map: CategoryMap | null, id: number): string {
@@ -110,5 +113,5 @@ export function categoryHref(map: CategoryMap | null, id: number): string {
     parts.unshift(parent.slug || 'category');
     cur = parent;
   }
-  return '/c/' + parts.join('/') + '/' + rec.id;
+  return `/c/${parts.join('/')}/${rec.id}`;
 }

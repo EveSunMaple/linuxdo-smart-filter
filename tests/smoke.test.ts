@@ -62,8 +62,22 @@ describe('启动冒烟', () => {
 
   it('预载数据在首屏即被过滤与保护', async () => {
     const topics = [
-      { id: 101, title: '我的gemini是不是生病了', category_id: 36, tags: [{ name: '纯水' }], posts_count: 5, views: 10 },
-      { id: 102, title: '开源项目 FooBar 发布 v2.0：支持多账号批量管理', category_id: 4, tags: [{ name: '开源' }], posts_count: 8, views: 99 },
+      {
+        id: 101,
+        title: '我的gemini是不是生病了',
+        category_id: 36,
+        tags: [{ name: '纯水' }],
+        posts_count: 5,
+        views: 10,
+      },
+      {
+        id: 102,
+        title: '开源项目 FooBar 发布 v2.0：支持多账号批量管理',
+        category_id: 4,
+        tags: [{ name: '开源' }],
+        posts_count: 8,
+        views: 99,
+      },
       { id: 103, title: '闲聊：今天天气不错', category_id: 36, tags: [], posts_count: 2, views: 3 },
     ];
     await boot(preloadScript(topics));

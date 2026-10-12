@@ -1,22 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { buildCategoryMap, pageContext } from '../src/page';
 import { compileRules, decide } from '../src/engine';
-import { defaultPresets } from '../src/presets';
 import { defaultLexicons } from '../src/lexicons';
-import type { Rule, Topic } from '../src/types';
-import type { PageInfo } from '../src/types';
+import { buildCategoryMap, pageContext } from '../src/page';
+import { defaultPresets } from '../src/presets';
+import type { PageInfo, Rule, Topic } from '../src/types';
 import { CATEGORY_CHILDREN, CATEGORY_IDS, SAMPLES } from './samples';
 
 function buildMap() {
   const categories: Array<Record<string, unknown>> = Object.entries(CATEGORY_IDS).map(([name, id]) => ({
     id,
     name,
-    slug: 'c' + id,
+    slug: `c${id}`,
     parent_category_id: null,
   }));
   for (const [parent, children] of Object.entries(CATEGORY_CHILDREN)) {
     for (const cid of children) {
-      categories.push({ id: cid, name: parent + ', Lv1', slug: 'lv' + cid, parent_category_id: CATEGORY_IDS[parent] });
+      categories.push({ id: cid, name: `${parent}, Lv1`, slug: `lv${cid}`, parent_category_id: CATEGORY_IDS[parent] });
     }
   }
   return buildCategoryMap(categories)!;
@@ -33,7 +32,7 @@ function mkTopic(title: string, category: string, tags: string[]): Topic {
 describe('标题分诊回归（截图语料）', () => {
   const state = compileRules(defaultPresets(), map);
   for (const s of SAMPLES) {
-    it(s.expect + ' | ' + s.title.slice(0, 30), () => {
+    it(`${s.expect} | ${s.title.slice(0, 30)}`, () => {
       const d = decide(mkTopic(s.title, s.category, s.tags), state, homePage, baseCtx);
       expect(d.kind).toBe(s.expect);
     });
@@ -43,7 +42,12 @@ describe('标题分诊回归（截图语料）', () => {
 describe('保护优先', () => {
   const state = compileRules(defaultPresets(), map);
   it('开源帖即使带人工智能标签也不被过滤', () => {
-    const d = decide(mkTopic('开源项目 FooBar 发布 v2.0：支持多账号批量管理', '开发调优', ['人工智能']), state, homePage, baseCtx);
+    const d = decide(
+      mkTopic('开源项目 FooBar 发布 v2.0：支持多账号批量管理', '开发调优', ['人工智能']),
+      state,
+      homePage,
+      baseCtx,
+    );
     expect(d.kind).toBe('highlight');
   });
   it('硬标签规则不受保护词影响', () => {
@@ -114,7 +118,7 @@ describe('规则编译', () => {
       when: { categoryNames: ['开发调优'], minAsk: 2 },
     };
     const state = compileRules([rule], map);
-    const sub: Topic = { id: 2, title: '求助 请问这个怎么弄', category_id: CATEGORY_CHILDREN['开发调优'][0], tags: [] };
+    const sub: Topic = { id: 2, title: '求助 请问这个怎么弄', category_id: CATEGORY_CHILDREN.开发调优[0], tags: [] };
     const d = decide(sub, state, homePage, baseCtx);
     expect(d.kind).toBe('filter');
   });

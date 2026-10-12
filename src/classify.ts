@@ -9,7 +9,7 @@ function escapeRe(s: string): string {
 function matchesWord(titleLower: string, word: string): boolean {
   const w = word.toLowerCase();
   if (ASCII_WORD.test(w)) {
-    return new RegExp('(^|[^a-z0-9])' + escapeRe(w) + '($|[^a-z0-9])').test(titleLower);
+    return new RegExp(`(^|[^a-z0-9])${escapeRe(w)}($|[^a-z0-9])`).test(titleLower);
   }
   return titleLower.includes(w);
 }
@@ -39,7 +39,7 @@ export function extractSignals(topic: Topic, lex: Lexicons): Signals {
 export function hasTag(topic: Topic, names: string[]): string | null {
   const set = new Set(names.map((s) => s.toLowerCase()));
   for (const t of topic.tags || []) {
-    if (t && t.name && set.has(t.name.toLowerCase())) return t.name;
+    if (t?.name && set.has(t.name.toLowerCase())) return t.name;
   }
   return null;
 }

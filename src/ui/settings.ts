@@ -1,8 +1,8 @@
 import { app } from '../context';
-import { getConfig, exportJSON, importJSON, resetLexicons, resetPresets } from '../store';
-import { RULE_COLORS, newRuleId } from '../presets';
+import { type CategoryRecord, categoryNameOf } from '../page';
+import { newRuleId, RULE_COLORS } from '../presets';
+import { exportJSON, getConfig, importJSON, resetLexicons, resetPresets } from '../store';
 import type { Rule, RuleWhen } from '../types';
-import { categoryNameOf, type CategoryRecord } from '../page';
 import { escAttr, escHtml, splitList, toast } from './common';
 
 type Tab = 'rules' | 'lexicons' | 'data';
@@ -26,22 +26,26 @@ function parents(): CategoryRecord[] {
 function summarize(rule: Rule): string {
   const w = rule.when || {};
   const parts: string[] = [];
-  if (w.categoryNames?.length) parts.push('板块：' + w.categoryNames.join('/'));
-  if (w.tagsAny?.length) parts.push('标签含：' + w.tagsAny.join('/'));
-  if (w.tagsNone?.length) parts.push('标签不含：' + w.tagsNone.join('/'));
-  if (w.minAsk != null) parts.push('提问词≥' + w.minAsk);
-  if (w.minBuzz != null) parts.push('主题词≥' + w.minBuzz);
-  if (w.minShield != null) parts.push('优质词≥' + w.minShield);
+  if (w.categoryNames?.length) parts.push(`板块：${w.categoryNames.join('/')}`);
+  if (w.tagsAny?.length) parts.push(`标签含：${w.tagsAny.join('/')}`);
+  if (w.tagsNone?.length) parts.push(`标签不含：${w.tagsNone.join('/')}`);
+  if (w.minAsk != null) parts.push(`提问词≥${w.minAsk}`);
+  if (w.minBuzz != null) parts.push(`主题词≥${w.minBuzz}`);
+  if (w.minShield != null) parts.push(`优质词≥${w.minShield}`);
   if (w.titleMinLen != null || w.titleMaxLen != null)
-    parts.push('标题长度 ' + (w.titleMinLen ?? 0) + '~' + (w.titleMaxLen ?? '∞'));
-  if (w.titleRegexAny?.length) parts.push('正则×' + w.titleRegexAny.length);
+    parts.push(`标题长度 ${w.titleMinLen ?? 0}~${w.titleMaxLen ?? '∞'}`);
+  if (w.titleRegexAny?.length) parts.push(`正则×${w.titleRegexAny.length}`);
   const scope = rule.scope;
   if (scope && scope.type !== 'global') {
     const scopeText =
       scope.type === 'home'
         ? '仅首页流'
-        : '仅板块页' + ((scope.categoryIds || []).length ? '（' + (scope.categoryIds || []).map((id) => categoryNameOf(app().getCatMap(), id)).join('/') + '）' : '') + (scope.includeHome ? '+首页' : '');
-    parts.push('作用域：' + scopeText);
+        : '仅板块页' +
+          ((scope.categoryIds || []).length
+            ? `（${(scope.categoryIds || []).map((id) => categoryNameOf(app().getCatMap(), id)).join('/')}）`
+            : '') +
+          (scope.includeHome ? '+首页' : '');
+    parts.push(`作用域：${scopeText}`);
   }
   return parts.join(' · ') || '无条件';
 }
@@ -63,7 +67,7 @@ export function openSettings(): void {
   tab = 'rules';
   editing = null;
   renderBox();
-  modal!.classList.add('ldf-open');
+  modal?.classList.add('ldf-open');
 }
 
 export function closeSettings(): void {
@@ -83,7 +87,15 @@ function renderBox(): void {
     '<div class="ldf-modal-box">' +
     renderHeader() +
     (inEditor ? '' : renderTabs()) +
-    '<div class="ldf-modal-body">' + (inEditor ? renderEditor() : tab === 'rules' ? renderRulesTab() : tab === 'lexicons' ? renderLexiconsTab() : renderDataTab()) + '</div>' +
+    '<div class="ldf-modal-body">' +
+    (inEditor
+      ? renderEditor()
+      : tab === 'rules'
+        ? renderRulesTab()
+        : tab === 'lexicons'
+          ? renderLexiconsTab()
+          : renderDataTab()) +
+    '</div>' +
     renderFooter(inEditor) +
     '</div>';
   bindBox(inEditor);
@@ -101,8 +113,14 @@ function renderHeader(): string {
 
 function renderTabs(): string {
   const t = (key: Tab, label: string): string =>
-    '<button type="button" class="ldf-tab' + (tab === key ? ' ldf-on' : '') + '" data-tab="' + key + '">' + label + '</button>';
-  return '<div class="ldf-tabs">' + t('rules', '规则') + t('lexicons', '词库') + t('data', '数据') + '</div>';
+    '<button type="button" class="ldf-tab' +
+    (tab === key ? ' ldf-on' : '') +
+    '" data-tab="' +
+    key +
+    '">' +
+    label +
+    '</button>';
+  return `<div class="ldf-tabs">${t('rules', '规则')}${t('lexicons', '词库')}${t('data', '数据')}</div>`;
 }
 
 function renderRulesTab(): string {
@@ -113,23 +131,37 @@ function renderRulesTab(): string {
       const err = errors.get(r.id);
       const modeChip =
         r.mode === 'highlight'
-          ? '<span class="ldf-chip ldf-highlight">保护</span><span class="ldf-dot" style="background:' + escAttr(r.color || '#2f9e44') + '"></span>'
+          ? '<span class="ldf-chip ldf-highlight">保护</span><span class="ldf-dot" style="background:' +
+            escAttr(r.color || '#2f9e44') +
+            '"></span>'
           : '<span class="ldf-chip ldf-filter">过滤</span>';
       return (
-        '<div class="ldf-rule-row" data-id="' + escAttr(r.id) + '">' +
-        '<label class="ldf-switch"><input type="checkbox" data-act="toggle"' + (r.enabled ? ' checked' : '') + '><span class="ldf-slider"></span></label>' +
+        '<div class="ldf-rule-row" data-id="' +
+        escAttr(r.id) +
+        '">' +
+        '<label class="ldf-switch"><input type="checkbox" data-act="toggle"' +
+        (r.enabled ? ' checked' : '') +
+        '><span class="ldf-slider"></span></label>' +
         '<div class="ldf-rule-main">' +
         '<div class="ldf-rule-name">' +
-        '<span class="ldf-chip">#' + (i + 1) + '</span>' +
+        '<span class="ldf-chip">#' +
+        (i + 1) +
+        '</span>' +
         modeChip +
         escHtml(r.name) +
         (r.preset ? '<span class="ldf-chip">预设</span>' : '') +
-        (err ? '<span class="ldf-chip ldf-err" title="' + escAttr(err) + '">⚠ ' + escHtml(err) + '</span>' : '') +
+        (err ? `<span class="ldf-chip ldf-err" title="${escAttr(err)}">⚠ ${escHtml(err)}</span>` : '') +
         '</div>' +
-        '<div class="ldf-rule-sub">' + escHtml(summarize(r)) + '</div>' +
+        '<div class="ldf-rule-sub">' +
+        escHtml(summarize(r)) +
         '</div>' +
-        '<button type="button" class="ldf-mini" data-act="up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
-        '<button type="button" class="ldf-mini" data-act="down"' + (i === cfg.rules.length - 1 ? ' disabled' : '') + '>↓</button>' +
+        '</div>' +
+        '<button type="button" class="ldf-mini" data-act="up"' +
+        (i === 0 ? ' disabled' : '') +
+        '>↑</button>' +
+        '<button type="button" class="ldf-mini" data-act="down"' +
+        (i === cfg.rules.length - 1 ? ' disabled' : '') +
+        '>↓</button>' +
         '<button type="button" class="ldf-btn" data-act="edit">编辑</button>' +
         (r.preset ? '' : '<button type="button" class="ldf-btn ldf-danger" data-act="del">删除</button>') +
         '</div>'
@@ -146,9 +178,15 @@ function renderRulesTab(): string {
 function renderLexiconsTab(): string {
   const lex = getConfig().lexicons;
   return (
-    '<div class="ldf-field"><label>提问词库（每行一个，也支持逗号分隔）</label><textarea class="ldf-textarea" id="ldf-lex-ask">' + escHtml(lex.ask.join('\n')) + '</textarea><div class="ldf-hint">标题命中这些词视为「求助/咨询」信号，如：求助、请问、有没有、推荐……</div></div>' +
-    '<div class="ldf-field"><label>主题词库（账号 / 消费 / 风控类）</label><textarea class="ldf-textarea" id="ldf-lex-buzz">' + escHtml(lex.buzz.join('\n')) + '</textarea><div class="ldf-hint">如：账号、额度、KYC、拼车、降智…… 与提问词组合时降噪效果最好。</div></div>' +
-    '<div class="ldf-field"><label>保护词库（优质内容信号）</label><textarea class="ldf-textarea" id="ldf-lex-shield">' + escHtml(lex.shield.join('\n')) + '</textarea><div class="ldf-hint">标题命中这些词的帖子会被视为优质内容，任何可保护的过滤规则都不会误杀它，如：开源、教程、实测、避坑……</div></div>' +
+    '<div class="ldf-field"><label>提问词库（每行一个，也支持逗号分隔）</label><textarea class="ldf-textarea" id="ldf-lex-ask">' +
+    escHtml(lex.ask.join('\n')) +
+    '</textarea><div class="ldf-hint">标题命中这些词视为「求助/咨询」信号，如：求助、请问、有没有、推荐……</div></div>' +
+    '<div class="ldf-field"><label>主题词库（账号 / 消费 / 风控类）</label><textarea class="ldf-textarea" id="ldf-lex-buzz">' +
+    escHtml(lex.buzz.join('\n')) +
+    '</textarea><div class="ldf-hint">如：账号、额度、KYC、拼车、降智…… 与提问词组合时降噪效果最好。</div></div>' +
+    '<div class="ldf-field"><label>保护词库（优质内容信号）</label><textarea class="ldf-textarea" id="ldf-lex-shield">' +
+    escHtml(lex.shield.join('\n')) +
+    '</textarea><div class="ldf-hint">标题命中这些词的帖子会被视为优质内容，任何可保护的过滤规则都不会误杀它，如：开源、教程、实测、避坑……</div></div>' +
     '<div class="ldf-inline"><button type="button" class="ldf-btn ldf-primary" data-act="save-lex">保存词库</button><button type="button" class="ldf-btn" data-act="reset-lex">恢复默认词库</button></div>'
   );
 }
@@ -156,9 +194,15 @@ function renderLexiconsTab(): string {
 function renderDataTab(): string {
   const cfg = getConfig();
   return (
-    '<div class="ldf-field"><label>导出配置</label><textarea class="ldf-textarea" id="ldf-export" readonly>' + escHtml(exportJSON()) + '</textarea><div class="ldf-inline"><button type="button" class="ldf-btn" data-act="copy-export">复制导出内容</button><span class="ldf-hint">可粘贴保存，或在其他浏览器 / 设备导入。</span></div></div>' +
+    '<div class="ldf-field"><label>导出配置</label><textarea class="ldf-textarea" id="ldf-export" readonly>' +
+    escHtml(exportJSON()) +
+    '</textarea><div class="ldf-inline"><button type="button" class="ldf-btn" data-act="copy-export">复制导出内容</button><span class="ldf-hint">可粘贴保存，或在其他浏览器 / 设备导入。</span></div></div>' +
     '<div class="ldf-field"><label>导入配置</label><textarea class="ldf-textarea" id="ldf-import" placeholder="粘贴导出的 JSON 后点击导入"></textarea><div class="ldf-inline"><button type="button" class="ldf-btn" data-act="import">导入并覆盖</button></div></div>' +
-    '<div class="ldf-field"><label>豁免名单</label><div class="ldf-hint">被豁免的主题 ID（每行一个）：</div><textarea class="ldf-textarea" id="ldf-ex-ids" style="min-height:60px">' + escHtml((cfg.exemptions.topicIds || []).join('\n')) + '</textarea><div class="ldf-hint" style="margin-top:8px">标题关键词豁免（包含这些词的标题不会被过滤）：</div><textarea class="ldf-textarea" id="ldf-ex-words" style="min-height:60px">' + escHtml((cfg.exemptions.titleKeywords || []).join('\n')) + '</textarea><div class="ldf-inline" style="margin-top:8px"><button type="button" class="ldf-btn ldf-primary" data-act="save-ex">保存豁免名单</button><button type="button" class="ldf-btn" data-act="clear-ex">清空豁免</button></div></div>'
+    '<div class="ldf-field"><label>豁免名单</label><div class="ldf-hint">被豁免的主题 ID（每行一个）：</div><textarea class="ldf-textarea" id="ldf-ex-ids" style="min-height:60px">' +
+    escHtml((cfg.exemptions.topicIds || []).join('\n')) +
+    '</textarea><div class="ldf-hint" style="margin-top:8px">标题关键词豁免（包含这些词的标题不会被过滤）：</div><textarea class="ldf-textarea" id="ldf-ex-words" style="min-height:60px">' +
+    escHtml((cfg.exemptions.titleKeywords || []).join('\n')) +
+    '</textarea><div class="ldf-inline" style="margin-top:8px"><button type="button" class="ldf-btn ldf-primary" data-act="save-ex">保存豁免名单</button><button type="button" class="ldf-btn" data-act="clear-ex">清空豁免</button></div></div>'
   );
 }
 
@@ -174,7 +218,15 @@ function renderEditor(): string {
       parentList
         .map(
           (c) =>
-            '<label class="ldf-cat-item"><input type="checkbox" class="' + cls + '" value="' + escAttr(c.name) + '"' + (selected.includes(c.name) ? ' checked' : '') + '>' + escHtml(c.name) + '</label>',
+            '<label class="ldf-cat-item"><input type="checkbox" class="' +
+            cls +
+            '" value="' +
+            escAttr(c.name) +
+            '"' +
+            (selected.includes(c.name) ? ' checked' : '') +
+            '>' +
+            escHtml(c.name) +
+            '</label>',
         )
         .join('') +
       '</div>'
@@ -183,36 +235,84 @@ function renderEditor(): string {
   const scope = r.scope || { type: 'global' as const };
   const scopeCatPicker =
     map && parentList.length
-      ? '<div class="ldf-cat-list" id="ldf-e-scopecats" style="display:' + (scope.type === 'category' ? 'flex' : 'none') + '">' +
+      ? '<div class="ldf-cat-list" id="ldf-e-scopecats" style="display:' +
+        (scope.type === 'category' ? 'flex' : 'none') +
+        '">' +
         parentList
           .map(
             (c) =>
-              '<label class="ldf-cat-item"><input type="checkbox" class="ldf-e-scopecat" value="' + c.id + '"' + ((scope.categoryIds || []).includes(c.id) ? ' checked' : '') + '>' + escHtml(c.name) + '</label>',
+              '<label class="ldf-cat-item"><input type="checkbox" class="ldf-e-scopecat" value="' +
+              c.id +
+              '"' +
+              ((scope.categoryIds || []).includes(c.id) ? ' checked' : '') +
+              '>' +
+              escHtml(c.name) +
+              '</label>',
           )
           .join('') +
-        '</div><label class="ldf-cat-item" id="ldf-e-includehome-wrap" style="display:' + (scope.type === 'category' ? 'inline-flex' : 'none') + ';margin-top:6px"><input type="checkbox" id="ldf-e-includehome"' + (scope.includeHome ? ' checked' : '') + '> 同时作用于首页流</label>'
+        '</div><label class="ldf-cat-item" id="ldf-e-includehome-wrap" style="display:' +
+        (scope.type === 'category' ? 'inline-flex' : 'none') +
+        ';margin-top:6px"><input type="checkbox" id="ldf-e-includehome"' +
+        (scope.includeHome ? ' checked' : '') +
+        '> 同时作用于首页流</label>'
       : '';
   return (
-    '<div class="ldf-field"><label>规则名称</label><input class="ldf-input" id="ldf-e-name" value="' + escAttr(r.name) + '" placeholder="例如：开发调优·求助降噪"></div>' +
+    '<div class="ldf-field"><label>规则名称</label><input class="ldf-input" id="ldf-e-name" value="' +
+    escAttr(r.name) +
+    '" placeholder="例如：开发调优·求助降噪"></div>' +
     '<div class="ldf-field"><label>规则类型</label><div class="ldf-inline">' +
-    '<div class="ldf-seg"><label><input type="radio" name="ldf-e-mode" value="filter"' + (r.mode === 'filter' ? ' checked' : '') + '><span>过滤</span></label><label><input type="radio" name="ldf-e-mode" value="highlight"' + (r.mode === 'highlight' ? ' checked' : '') + '><span>保护高亮</span></label></div>' +
-    '<label id="ldf-e-color-wrap" style="display:' + (r.mode === 'highlight' ? 'inline-flex' : 'none') + ';align-items:center;gap:6px;font-size:13px">颜色 <input type="color" id="ldf-e-color" value="' + escAttr(r.color || RULE_COLORS[0]) + '"></label>' +
+    '<div class="ldf-seg"><label><input type="radio" name="ldf-e-mode" value="filter"' +
+    (r.mode === 'filter' ? ' checked' : '') +
+    '><span>过滤</span></label><label><input type="radio" name="ldf-e-mode" value="highlight"' +
+    (r.mode === 'highlight' ? ' checked' : '') +
+    '><span>保护高亮</span></label></div>' +
+    '<label id="ldf-e-color-wrap" style="display:' +
+    (r.mode === 'highlight' ? 'inline-flex' : 'none') +
+    ';align-items:center;gap:6px;font-size:13px">颜色 <input type="color" id="ldf-e-color" value="' +
+    escAttr(r.color || RULE_COLORS[0]) +
+    '"></label>' +
     '</div><div class="ldf-hint">过滤 = 从列表移除；保护高亮 = 永不误杀并标记颜色。</div></div>' +
     '<div class="ldf-field"><label>作用域（规则在哪些页面生效）</label><div class="ldf-inline">' +
-    '<div class="ldf-seg"><label><input type="radio" name="ldf-e-scope" value="global"' + (scope.type === 'global' ? ' checked' : '') + '><span>全局</span></label><label><input type="radio" name="ldf-e-scope" value="home"' + (scope.type === 'home' ? ' checked' : '') + '><span>仅首页流</span></label><label><input type="radio" name="ldf-e-scope" value="category"' + (scope.type === 'category' ? ' checked' : '') + '><span>指定板块页</span></label></div>' +
+    '<div class="ldf-seg"><label><input type="radio" name="ldf-e-scope" value="global"' +
+    (scope.type === 'global' ? ' checked' : '') +
+    '><span>全局</span></label><label><input type="radio" name="ldf-e-scope" value="home"' +
+    (scope.type === 'home' ? ' checked' : '') +
+    '><span>仅首页流</span></label><label><input type="radio" name="ldf-e-scope" value="category"' +
+    (scope.type === 'category' ? ' checked' : '') +
+    '><span>指定板块页</span></label></div>' +
     '</div>' +
     scopeCatPicker +
     '</div>' +
-    '<div class="ldf-field"><label>条件 · 所属板块（勾选后自动包含子板块）</label>' + catPicker('ldf-e-cat', w.categoryNames || []) + '</div>' +
-    '<div class="ldf-field"><label>条件 · 标签</label><div class="ldf-inline"><input class="ldf-input" id="ldf-e-tagsany" style="flex:1;min-width:200px" placeholder="包含任一标签（逗号分隔），如：人工智能, 快问快答" value="' + escAttr((w.tagsAny || []).join(', ')) + '"><input class="ldf-input" id="ldf-e-tagsnone" style="flex:1;min-width:200px" placeholder="不包含标签（逗号分隔）" value="' + escAttr((w.tagsNone || []).join(', ')) + '"></div></div>' +
+    '<div class="ldf-field"><label>条件 · 所属板块（勾选后自动包含子板块）</label>' +
+    catPicker('ldf-e-cat', w.categoryNames || []) +
+    '</div>' +
+    '<div class="ldf-field"><label>条件 · 标签</label><div class="ldf-inline"><input class="ldf-input" id="ldf-e-tagsany" style="flex:1;min-width:200px" placeholder="包含任一标签（逗号分隔），如：人工智能, 快问快答" value="' +
+    escAttr((w.tagsAny || []).join(', ')) +
+    '"><input class="ldf-input" id="ldf-e-tagsnone" style="flex:1;min-width:200px" placeholder="不包含标签（逗号分隔）" value="' +
+    escAttr((w.tagsNone || []).join(', ')) +
+    '"></div></div>' +
     '<div class="ldf-field"><label>条件 · 标题信号（留空 = 不限制）</label><div class="ldf-inline">' +
-    '提问词 ≥ <input class="ldf-input ldf-num" id="ldf-e-minask" type="number" min="0" value="' + escAttr(w.minAsk ?? '') + '">' +
-    '主题词 ≥ <input class="ldf-input ldf-num" id="ldf-e-minbuzz" type="number" min="0" value="' + escAttr(w.minBuzz ?? '') + '">' +
-    '优质词 ≥ <input class="ldf-input ldf-num" id="ldf-e-minshield" type="number" min="0" value="' + escAttr(w.minShield ?? '') + '">' +
-    '标题长度 <input class="ldf-input ldf-num" id="ldf-e-minlen" type="number" min="0" placeholder="最小" value="' + escAttr(w.titleMinLen ?? '') + '"> ~ <input class="ldf-input ldf-num" id="ldf-e-maxlen" type="number" min="0" placeholder="最大" value="' + escAttr(w.titleMaxLen ?? '') + '">' +
+    '提问词 ≥ <input class="ldf-input ldf-num" id="ldf-e-minask" type="number" min="0" value="' +
+    escAttr(w.minAsk ?? '') +
+    '">' +
+    '主题词 ≥ <input class="ldf-input ldf-num" id="ldf-e-minbuzz" type="number" min="0" value="' +
+    escAttr(w.minBuzz ?? '') +
+    '">' +
+    '优质词 ≥ <input class="ldf-input ldf-num" id="ldf-e-minshield" type="number" min="0" value="' +
+    escAttr(w.minShield ?? '') +
+    '">' +
+    '标题长度 <input class="ldf-input ldf-num" id="ldf-e-minlen" type="number" min="0" placeholder="最小" value="' +
+    escAttr(w.titleMinLen ?? '') +
+    '"> ~ <input class="ldf-input ldf-num" id="ldf-e-maxlen" type="number" min="0" placeholder="最大" value="' +
+    escAttr(w.titleMaxLen ?? '') +
+    '">' +
     '</div><div class="ldf-hint">信号计数来自「词库」标签页中对应词库的命中数（去重后的词数）。</div></div>' +
-    '<div class="ldf-field"><label>条件 · 标题正则（每行一条，满足任意一条即可）</label><textarea class="ldf-textarea" id="ldf-e-regex" placeholder="例如：^求推荐">' + escHtml((w.titleRegexAny || []).join('\n')) + '</textarea></div>' +
-    '<div class="ldf-inline"><button type="button" class="ldf-btn ldf-primary" data-act="save-rule">保存规则</button><button type="button" class="ldf-btn" data-act="cancel-rule">取消</button>' + (isNewRule ? '' : '<button type="button" class="ldf-btn ldf-danger" data-act="del-in-editor">删除规则</button>') + '</div>'
+    '<div class="ldf-field"><label>条件 · 标题正则（每行一条，满足任意一条即可）</label><textarea class="ldf-textarea" id="ldf-e-regex" placeholder="例如：^求推荐">' +
+    escHtml((w.titleRegexAny || []).join('\n')) +
+    '</textarea></div>' +
+    '<div class="ldf-inline"><button type="button" class="ldf-btn ldf-primary" data-act="save-rule">保存规则</button><button type="button" class="ldf-btn" data-act="cancel-rule">取消</button>' +
+    (isNewRule ? '' : '<button type="button" class="ldf-btn ldf-danger" data-act="del-in-editor">删除规则</button>') +
+    '</div>'
   );
 }
 
@@ -220,8 +320,12 @@ function renderFooter(inEditor: boolean): string {
   const cfg = getConfig();
   return (
     '<div class="ldf-modal-footer"><div class="ldf-footer-left">' +
-    '<label class="ldf-cat-item"><input type="checkbox" id="ldf-f-master"' + (cfg.masterEnabled ? ' checked' : '') + '> 启用降噪</label>' +
-    '<label class="ldf-cat-item"><input type="checkbox" id="ldf-f-debug"' + (cfg.debug ? ' checked' : '') + '> 调试日志</label>' +
+    '<label class="ldf-cat-item"><input type="checkbox" id="ldf-f-master"' +
+    (cfg.masterEnabled ? ' checked' : '') +
+    '> 启用降噪</label>' +
+    '<label class="ldf-cat-item"><input type="checkbox" id="ldf-f-debug"' +
+    (cfg.debug ? ' checked' : '') +
+    '> 调试日志</label>' +
     '</div>' +
     (inEditor
       ? ''
@@ -237,16 +341,16 @@ function findRule(id: string): Rule | undefined {
 function bindBox(inEditor: boolean): void {
   const box = modal!;
   box.querySelector('[data-act="close"]')?.addEventListener('click', closeSettings);
-  box.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) =>
+  box.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => {
     b.addEventListener('click', () => {
       tab = b.dataset.tab as Tab;
       renderBox();
-    }),
-  );
+    });
+  });
   box.querySelector('#ldf-f-master')?.addEventListener('change', (e) => {
     getConfig().masterEnabled = (e.target as HTMLInputElement).checked;
     app().save();
-    toast('降噪总开关已' + ((e.target as HTMLInputElement).checked ? '启用' : '关闭') + '，刷新页面后生效');
+    toast(`降噪总开关已${(e.target as HTMLInputElement).checked ? '启用' : '关闭'}，刷新页面后生效`);
   });
   box.querySelector('#ldf-f-debug')?.addEventListener('change', (e) => {
     getConfig().debug = (e.target as HTMLInputElement).checked;
@@ -305,7 +409,7 @@ function bindRulesTab(): void {
     });
     row.querySelector('[data-act="del"]')?.addEventListener('click', () => {
       const r = findRule(id);
-      if (r && confirm('删除规则「' + r.name + '」？')) {
+      if (r && confirm(`删除规则「${r.name}」？`)) {
         const cfg = getConfig();
         cfg.rules = cfg.rules.filter((x) => x.id !== id);
         refreshAll();
@@ -328,29 +432,30 @@ function bindRulesTab(): void {
 
 function bindEditor(): void {
   const box = modal!;
-  box.querySelectorAll<HTMLInputElement>('input[name="ldf-e-mode"]').forEach((radio) =>
+  box.querySelectorAll<HTMLInputElement>('input[name="ldf-e-mode"]').forEach((radio) => {
     radio.addEventListener('change', () => {
       const wrap = box.querySelector<HTMLElement>('#ldf-e-color-wrap');
       if (wrap) wrap.style.display = radio.value === 'highlight' && radio.checked ? 'inline-flex' : 'none';
-    }),
-  );
-  box.querySelectorAll<HTMLInputElement>('input[name="ldf-e-scope"]').forEach((radio) =>
+    });
+  });
+  box.querySelectorAll<HTMLInputElement>('input[name="ldf-e-scope"]').forEach((radio) => {
     radio.addEventListener('change', () => {
-      const isCat = (box.querySelector<HTMLInputElement>('input[name="ldf-e-scope"]:checked')?.value || '') === 'category';
+      const isCat =
+        (box.querySelector<HTMLInputElement>('input[name="ldf-e-scope"]:checked')?.value || '') === 'category';
       const cats = box.querySelector<HTMLElement>('#ldf-e-scopecats');
       const home = box.querySelector<HTMLElement>('#ldf-e-includehome-wrap');
       if (cats) cats.style.display = isCat ? 'flex' : 'none';
       if (home) home.style.display = isCat ? 'inline-flex' : 'none';
-    }),
-  );
+    });
+  });
   box.querySelector('[data-act="save-rule"]')?.addEventListener('click', saveEditor);
   box.querySelector('[data-act="cancel-rule"]')?.addEventListener('click', () => {
     editing = null;
     renderBox();
   });
   box.querySelector('[data-act="del-in-editor"]')?.addEventListener('click', () => {
-    const id = editing!.id;
-    if (!confirm('删除规则「' + editing!.name + '」？')) return;
+    const id = editing?.id;
+    if (!confirm(`删除规则「${editing?.name}」？`)) return;
     const cfg = getConfig();
     cfg.rules = cfg.rules.filter((x) => x.id !== id);
     app().recompile();
@@ -362,10 +467,16 @@ function bindEditor(): void {
 function saveEditor(): void {
   const box = modal!;
   const name = (box.querySelector<HTMLInputElement>('#ldf-e-name')?.value || '').trim() || '未命名规则';
-  const mode = (box.querySelector<HTMLInputElement>('input[name="ldf-e-mode"]:checked')?.value || 'filter') as Rule['mode'];
+  const mode = (box.querySelector<HTMLInputElement>('input[name="ldf-e-mode"]:checked')?.value ||
+    'filter') as Rule['mode'];
   const color = box.querySelector<HTMLInputElement>('#ldf-e-color')?.value || RULE_COLORS[0];
-  const scopeType = (box.querySelector<HTMLInputElement>('input[name="ldf-e-scope"]:checked')?.value || 'global') as 'global' | 'home' | 'category';
-  const scopeCats = Array.from(box.querySelectorAll<HTMLInputElement>('.ldf-e-scopecat:checked')).map((i) => parseInt(i.value, 10));
+  const scopeType = (box.querySelector<HTMLInputElement>('input[name="ldf-e-scope"]:checked')?.value || 'global') as
+    | 'global'
+    | 'home'
+    | 'category';
+  const scopeCats = Array.from(box.querySelectorAll<HTMLInputElement>('.ldf-e-scopecat:checked')).map((i) =>
+    parseInt(i.value, 10),
+  );
   const includeHome = box.querySelector<HTMLInputElement>('#ldf-e-includehome')?.checked === true;
 
   const when: RuleWhen = {};
@@ -400,7 +511,7 @@ function saveEditor(): void {
       try {
         new RegExp(line);
       } catch (e) {
-        toast('正则无效：' + line + '（' + (e as Error).message + '）');
+        toast(`正则无效：${line}（${(e as Error).message}）`);
         return;
       }
     }
@@ -496,7 +607,7 @@ function bindDataTab(): void {
     }
     const r = importJSON(text);
     if (!r.ok) {
-      toast('导入失败：' + r.error);
+      toast(`导入失败：${r.error}`);
       return;
     }
     app().recompile();
