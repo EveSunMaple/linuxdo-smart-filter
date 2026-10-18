@@ -367,12 +367,13 @@ function hookXHR(): void {
   const descText = Object.getOwnPropertyDescriptor(XHR.prototype, 'responseText');
   const descResp = Object.getOwnPropertyDescriptor(XHR.prototype, 'response');
   XHR.prototype.open = function (
-    this: XMLHttpRequest & { __ldfUrl?: string },
+    this: XMLHttpRequest & { __ldfUrl?: string; __ldfCache?: string },
     method: string,
     url: string | URL,
     ...rest: unknown[]
   ) {
     this.__ldfUrl = String(url);
+    delete this.__ldfCache;
     return (open as (...args: unknown[]) => void).apply(this, [method, url, ...rest]);
   };
   XHR.prototype.send = function (

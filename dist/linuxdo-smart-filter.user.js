@@ -638,6 +638,7 @@
     const descResp = Object.getOwnPropertyDescriptor(XHR.prototype, "response");
     XHR.prototype.open = function(method, url, ...rest) {
       this.__ldfUrl = String(url);
+      delete this.__ldfCache;
       return open.apply(this, [method, url, ...rest]);
     };
     XHR.prototype.send = function(...args) {
