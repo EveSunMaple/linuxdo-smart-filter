@@ -49,7 +49,7 @@ function normalizeLexicons(x: unknown): Lexicons {
   const def = defaultLexicons();
   const l = (x ?? {}) as Partial<Lexicons>;
   const pick = (v: unknown, d: string[]): string[] =>
-    Array.isArray(v) && v.length ? v.filter((s) => typeof s === 'string' && s.trim().length > 0) : d;
+    Array.isArray(v) ? v.filter((s) => typeof s === 'string' && s.trim().length > 0) : d;
   return { ask: pick(l.ask, def.ask), buzz: pick(l.buzz, def.buzz), shield: pick(l.shield, def.shield) };
 }
 

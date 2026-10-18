@@ -180,13 +180,13 @@ function renderLexiconsTab(): string {
   return (
     '<div class="ldf-field"><label>提问词库（每行一个，也支持逗号分隔）</label><textarea class="ldf-textarea" id="ldf-lex-ask">' +
     escHtml(lex.ask.join('\n')) +
-    '</textarea><div class="ldf-hint">标题命中这些词视为「求助/咨询」信号，如：求助、请问、有没有、推荐……</div></div>' +
+    '</textarea><div class="ldf-hint">标题命中这些词视为「求助/咨询」信号，如：求助、请问、有没有、推荐……留空则仅保留问句结尾判定。</div></div>' +
     '<div class="ldf-field"><label>主题词库（账号 / 消费 / 风控类）</label><textarea class="ldf-textarea" id="ldf-lex-buzz">' +
     escHtml(lex.buzz.join('\n')) +
-    '</textarea><div class="ldf-hint">如：账号、额度、KYC、拼车、降智…… 与提问词组合时降噪效果最好。</div></div>' +
+    '</textarea><div class="ldf-hint">如：账号、额度、KYC、拼车、降智…… 与提问词组合时降噪效果最好。留空则关闭主题词信号。</div></div>' +
     '<div class="ldf-field"><label>保护词库（优质内容信号）</label><textarea class="ldf-textarea" id="ldf-lex-shield">' +
     escHtml(lex.shield.join('\n')) +
-    '</textarea><div class="ldf-hint">标题命中这些词的帖子会被视为优质内容，任何可保护的过滤规则都不会误杀它，如：开源、教程、实测、避坑……</div></div>' +
+    '</textarea><div class="ldf-hint">标题命中这些词的帖子会被视为优质内容，任何可保护的过滤规则都不会误杀它，如：开源、教程、实测、避坑……留空则关闭保护词豁免。</div></div>' +
     '<div class="ldf-inline"><button type="button" class="ldf-btn ldf-primary" data-act="save-lex">保存词库</button><button type="button" class="ldf-btn" data-act="reset-lex">恢复默认词库</button></div>'
   );
 }
