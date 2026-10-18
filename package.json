@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.8.0",
   "description": "LinuxDo 智能降噪过滤器：按板块/标签/标题内容分诊，保护优质内容",
   "scripts": {
     "build": "node build.mjs",

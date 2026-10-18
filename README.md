@@ -90,12 +90,12 @@
 ## 开发
 
 ```bash
-npm install
-npm run typecheck   # TS 类型检查
-npm run lint        # Biome 静态检查 + 格式校验
-npm run lint:fix    # 自动修复与格式化
-npm test            # 语料回归测试（vitest）
-npm run build       # 构建 dist/linuxdo-smart-filter.user.js（可用 --watch）
+pnpm install
+pnpm typecheck   # TS 类型检查
+pnpm lint        # Biome 静态检查 + 格式校验
+pnpm lint:fix    # 自动修复与格式化
+pnpm test        # 语料回归测试（vitest）
+pnpm build       # 构建 dist/linuxdo-smart-filter.user.js（可用 --watch）
 ```
 
 目录结构：
