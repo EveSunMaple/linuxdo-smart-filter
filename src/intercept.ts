@@ -347,10 +347,14 @@ function hookFetch(): void {
             const obj = JSON.parse(text);
             const r = processTopicList(pg, obj);
             if (!r) return resp;
+            // Response.url 只读无法复制；重建响应时去掉与原始实体长度/编码相关的头
+            const headers = new Headers(resp.headers);
+            headers.delete('content-length');
+            headers.delete('content-encoding');
             return new Response(JSON.stringify(obj), {
               status: resp.status,
               statusText: resp.statusText,
-              headers: resp.headers,
+              headers,
             });
           } catch (e) {
             host?.log('fetch 过滤失败', e);

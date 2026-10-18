@@ -619,10 +619,13 @@
             const obj = JSON.parse(text);
             const r = processTopicList(pg, obj);
             if (!r) return resp;
+            const headers = new Headers(resp.headers);
+            headers.delete("content-length");
+            headers.delete("content-encoding");
             return new Response(JSON.stringify(obj), {
               status: resp.status,
               statusText: resp.statusText,
-              headers: resp.headers
+              headers
             });
           } catch (e) {
             host?.log("fetch 过滤失败", e);
