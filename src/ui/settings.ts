@@ -132,7 +132,7 @@ function renderRulesTab(): string {
       const modeChip =
         r.mode === 'highlight'
           ? '<span class="ldf-chip ldf-highlight">保护</span><span class="ldf-dot" style="background:' +
-            escAttr(r.color || '#2f9e44') +
+            escAttr(r.color || '#1ca551') +
             '"></span>'
           : '<span class="ldf-chip ldf-filter">过滤</span>';
       return (

@@ -225,7 +225,7 @@ function domPass(): void {
     const known = decided.get(id);
     if (known) {
       if (known.kind === 'filter') hideRow(row);
-      else if (known.kind === 'highlight') paintRow(row, known.color || '#2f9e44');
+      else if (known.kind === 'highlight') paintRow(row, known.color || '#1ca551');
       return;
     }
     const topic = getDomTopic(row);

@@ -184,7 +184,7 @@ export function decide(topic: Topic, state: CompiledState, pg: PageInfo, ctx: De
       kind: 'highlight',
       rule: c.rule,
       ruleIndex: c.ruleIndex,
-      color: c.rule.color || '#2f9e44',
+      color: c.rule.color || '#1ca551',
       reason: buildReason(c, topic, sig),
       signals: sig,
     };

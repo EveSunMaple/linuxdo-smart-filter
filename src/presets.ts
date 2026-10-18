@@ -1,6 +1,6 @@
 import type { Rule } from './types';
 
-export const RULE_COLORS = ['#2f9e44', '#1971c2', '#f08c00', '#e8590c', '#9c36b5', '#0c8599'];
+export const RULE_COLORS = ['#1ca551', '#099dd7', '#e45735', '#f5bf03', '#fa6c8d'];
 
 export function defaultPresets(): Rule[] {
   return [
@@ -67,7 +67,7 @@ export function defaultPresets(): Rule[] {
       preset: true,
       enabled: true,
       mode: 'highlight',
-      color: '#2f9e44',
+      color: '#1ca551',
       when: { minShield: 1 },
     },
     {
@@ -76,7 +76,7 @@ export function defaultPresets(): Rule[] {
       preset: true,
       enabled: true,
       mode: 'highlight',
-      color: '#1971c2',
+      color: '#099dd7',
       when: { tagsAny: ['开源', '开源项目', '教程', '分享', '资源分享'] },
     },
   ];
