@@ -1,6 +1,6 @@
 import { app } from '../context';
 import { categoryHref, categoryNameOf } from '../page';
-import { escHtml, trapFocus } from './common';
+import { escAttr, escHtml, trapFocus } from './common';
 
 let drawer: HTMLDivElement | null = null;
 let lastFocus: HTMLElement | null = null;
@@ -60,7 +60,7 @@ function render(): void {
         '</a>' +
         '<div class="ldf-item-meta">' +
         '<a class="ldf-item-cat" href="' +
-        catLink +
+        escAttr(catLink) +
         '" target="_blank" rel="noopener">' +
         escHtml(cat) +
         '</a>' +

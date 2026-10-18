@@ -4,7 +4,6 @@ export interface Sample {
   tags: string[];
   expect: 'filter' | 'keep' | 'highlight';
   note?: string;
-  needShortAsk?: boolean;
 }
 
 export const CATEGORY_IDS: Record<string, number> = {
