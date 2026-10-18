@@ -37,6 +37,7 @@ export function extractSignals(topic: Topic, lex: Lexicons): Signals {
 }
 
 export function hasTag(topic: Topic, names: string[]): string | null {
+  if (!Array.isArray(names) || names.length === 0) return null;
   const set = new Set(names.map((s) => s.toLowerCase()));
   for (const t of topic.tags || []) {
     if (t?.name && set.has(t.name.toLowerCase())) return t.name;

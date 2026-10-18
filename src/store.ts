@@ -1,6 +1,6 @@
 import { defaultLexicons } from './lexicons';
 import { defaultPresets } from './presets';
-import type { Config, Exemptions, Lexicons, Rule } from './types';
+import type { Config, Exemptions, Lexicons, Rule, RuleScope, RuleWhen } from './types';
 
 const KEY = 'ldf_config_v1';
 const CONFIG_VERSION = 1;
@@ -53,10 +53,83 @@ function normalizeLexicons(x: unknown): Lexicons {
   return { ask: pick(l.ask, def.ask), buzz: pick(l.buzz, def.buzz), shield: pick(l.shield, def.shield) };
 }
 
+function strArray(v: unknown): string[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out = v.filter((s): s is string => typeof s === 'string' && s.trim().length > 0);
+  return out.length ? out : undefined;
+}
+
+function nonNegNumber(v: unknown): number | undefined {
+  return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : undefined;
+}
+
+function normalizeWhen(x: unknown): RuleWhen | undefined {
+  if (!x || typeof x !== 'object') return undefined;
+  const w = x as Record<string, unknown>;
+  const out: RuleWhen = {};
+  const categoryNames = strArray(w.categoryNames);
+  if (categoryNames) out.categoryNames = categoryNames;
+  const tagsAny = strArray(w.tagsAny);
+  if (tagsAny) out.tagsAny = tagsAny;
+  const tagsNone = strArray(w.tagsNone);
+  if (tagsNone) out.tagsNone = tagsNone;
+  const minAsk = nonNegNumber(w.minAsk);
+  if (minAsk != null) out.minAsk = minAsk;
+  const minBuzz = nonNegNumber(w.minBuzz);
+  if (minBuzz != null) out.minBuzz = minBuzz;
+  const minShield = nonNegNumber(w.minShield);
+  if (minShield != null) out.minShield = minShield;
+  const titleMaxLen = nonNegNumber(w.titleMaxLen);
+  if (titleMaxLen != null) out.titleMaxLen = titleMaxLen;
+  const titleMinLen = nonNegNumber(w.titleMinLen);
+  if (titleMinLen != null) out.titleMinLen = titleMinLen;
+  const titleRegexAny = strArray(w.titleRegexAny);
+  if (titleRegexAny) out.titleRegexAny = titleRegexAny;
+  return out;
+}
+
+function normalizeScope(x: unknown): RuleScope | undefined {
+  if (!x || typeof x !== 'object') return undefined;
+  const s = x as Record<string, unknown>;
+  if (s.type === 'home') return { type: 'home' };
+  if (s.type === 'category') {
+    const ids = Array.isArray(s.categoryIds)
+      ? s.categoryIds.filter((n): n is number => typeof n === 'number' && Number.isFinite(n))
+      : [];
+    return { type: 'category', categoryIds: ids, includeHome: s.includeHome === true };
+  }
+  return { type: 'global' };
+}
+
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+function normalizeRule(r: Rule): Rule {
+  const out: Rule = {
+    id: r.id,
+    name: typeof r.name === 'string' && r.name.trim() ? r.name : '未命名规则',
+    mode: r.mode === 'highlight' ? 'highlight' : 'filter',
+    enabled: r.enabled !== false,
+  };
+  if (r.preset === true) out.preset = true;
+  if (r.shieldable === false) out.shieldable = false;
+  if (typeof r.color === 'string' && HEX_COLOR.test(r.color)) out.color = r.color;
+  const scope = normalizeScope(r.scope);
+  if (scope) out.scope = scope;
+  const when = normalizeWhen(r.when);
+  if (when) out.when = when;
+  return out;
+}
+
 function normalizeRules(x: unknown): Rule[] {
   const presets = defaultPresets();
-  const raw = Array.isArray(x) ? (x as Rule[]) : [];
-  const valid = raw.filter((r) => r && typeof r === 'object' && typeof r.id === 'string' && r.id.length > 0);
+  const raw = Array.isArray(x) ? x : [];
+  const valid = raw
+    .filter((r): r is Rule => {
+      if (!r || typeof r !== 'object') return false;
+      const id = (r as { id?: unknown }).id;
+      return typeof id === 'string' && id.length > 0;
+    })
+    .map(normalizeRule);
   const byId = new Map(valid.map((r) => [r.id, r]));
   for (const p of presets) {
     if (!byId.has(p.id)) valid.push(p);
