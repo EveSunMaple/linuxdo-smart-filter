@@ -59,6 +59,7 @@ function boot(): void {
     },
     onBucketChange() {
       updateCount();
+      window.dispatchEvent(new Event('ldf:bucket'));
     },
     log: (...args: unknown[]) => {
       if (getConfig().debug) console.log('%c[LD-SF]', 'color:#3aa', ...args);

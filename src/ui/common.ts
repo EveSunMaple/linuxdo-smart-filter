@@ -57,3 +57,25 @@ export function copyText(text: string): Promise<boolean> {
   }
   return Promise.resolve(false);
 }
+
+export function trapFocus(container: HTMLElement, e: KeyboardEvent): void {
+  if (e.key !== 'Tab') return;
+  const focusables = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  );
+  if (!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  const active = document.activeElement;
+  if (e.shiftKey) {
+    if (active === first || !container.contains(active)) {
+      e.preventDefault();
+      last.focus();
+    }
+  } else if (active === last || !container.contains(active)) {
+    e.preventDefault();
+    first.focus();
+  }
+}

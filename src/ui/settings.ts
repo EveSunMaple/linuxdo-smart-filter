@@ -3,7 +3,7 @@ import { type CategoryRecord, categoryNameOf } from '../page';
 import { newRuleId, RULE_COLORS } from '../presets';
 import { exportJSON, getConfig, importJSON, resetLexicons, resetPresets } from '../store';
 import type { Rule, RuleWhen } from '../types';
-import { escAttr, escHtml, splitList, toast } from './common';
+import { escAttr, escHtml, splitList, toast, trapFocus } from './common';
 
 type Tab = 'rules' | 'lexicons' | 'data';
 
@@ -11,6 +11,7 @@ let modal: HTMLDivElement | null = null;
 let tab: Tab = 'rules';
 let editing: Rule | null = null;
 let isNewRule = false;
+let lastFocus: HTMLElement | null = null;
 
 function parents(): CategoryRecord[] {
   const map = app().getCatMap();
@@ -58,6 +59,19 @@ function buildModal(): HTMLDivElement {
   el.addEventListener('click', (e) => {
     if (e.target === el) closeSettings();
   });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (editing !== null) {
+        editing = null;
+        isNewRule = false;
+        renderBox();
+      } else {
+        closeSettings();
+      }
+      return;
+    }
+    trapFocus(el, e);
+  });
   modal = el;
   return el;
 }
@@ -67,11 +81,17 @@ export function openSettings(): void {
   tab = 'rules';
   editing = null;
   renderBox();
+  if (modal && !modal.classList.contains('ldf-open')) {
+    lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }
   modal?.classList.add('ldf-open');
+  modal?.querySelector<HTMLElement>('.ldf-modal-close')?.focus();
 }
 
 export function closeSettings(): void {
   if (modal) modal.classList.remove('ldf-open');
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  lastFocus = null;
 }
 
 function refreshAll(): void {
@@ -84,7 +104,7 @@ function renderBox(): void {
   if (!modal) return;
   const inEditor = editing !== null;
   modal.innerHTML =
-    '<div class="ldf-modal-box">' +
+    '<div class="ldf-modal-box" role="dialog" aria-modal="true">' +
     renderHeader() +
     (inEditor ? '' : renderTabs()) +
     '<div class="ldf-modal-body">' +
