@@ -35,12 +35,19 @@
   function escapeRe(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
+  var wordReCache = /* @__PURE__ */ new Map();
+  function wordBoundaryRe(word) {
+    let re = wordReCache.get(word);
+    if (re === void 0) {
+      re = ASCII_WORD.test(word) ? new RegExp(`(^|[^a-z0-9])${escapeRe(word)}($|[^a-z0-9])`) : null;
+      wordReCache.set(word, re);
+    }
+    return re;
+  }
   function matchesWord(titleLower, word) {
     const w = word.toLowerCase();
-    if (ASCII_WORD.test(w)) {
-      return new RegExp(`(^|[^a-z0-9])${escapeRe(w)}($|[^a-z0-9])`).test(titleLower);
-    }
-    return titleLower.includes(w);
+    const re = wordBoundaryRe(w);
+    return re ? re.test(titleLower) : titleLower.includes(w);
   }
   function collect(titleLower, words) {
     const hits = [];

@@ -6,12 +6,21 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const wordReCache = new Map<string, RegExp | null>();
+
+function wordBoundaryRe(word: string): RegExp | null {
+  let re = wordReCache.get(word);
+  if (re === undefined) {
+    re = ASCII_WORD.test(word) ? new RegExp(`(^|[^a-z0-9])${escapeRe(word)}($|[^a-z0-9])`) : null;
+    wordReCache.set(word, re);
+  }
+  return re;
+}
+
 function matchesWord(titleLower: string, word: string): boolean {
   const w = word.toLowerCase();
-  if (ASCII_WORD.test(w)) {
-    return new RegExp(`(^|[^a-z0-9])${escapeRe(w)}($|[^a-z0-9])`).test(titleLower);
-  }
-  return titleLower.includes(w);
+  const re = wordBoundaryRe(w);
+  return re ? re.test(titleLower) : titleLower.includes(w);
 }
 
 function collect(titleLower: string, words: string[]): string[] {
