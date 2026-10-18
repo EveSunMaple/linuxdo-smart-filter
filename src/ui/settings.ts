@@ -36,6 +36,7 @@ function summarize(rule: Rule): string {
   if (w.titleMinLen != null || w.titleMaxLen != null)
     parts.push(`标题长度 ${w.titleMinLen ?? 0}~${w.titleMaxLen ?? '∞'}`);
   if (w.titleRegexAny?.length) parts.push(`正则×${w.titleRegexAny.length}`);
+  if (rule.mode === 'filter' && rule.shieldable === false) parts.push('硬过滤');
   const scope = rule.scope;
   if (scope && scope.type !== 'global') {
     const scopeText =
@@ -291,7 +292,12 @@ function renderEditor(): string {
     ';align-items:center;gap:6px;font-size:13px">颜色 <input type="color" id="ldf-e-color" value="' +
     escAttr(r.color || RULE_COLORS[0]) +
     '"></label>' +
-    '</div><div class="ldf-hint">过滤 = 从列表移除；保护高亮 = 永不误杀并标记颜色。</div></div>' +
+    '<label class="ldf-cat-item" id="ldf-e-hard-wrap" style="display:' +
+    (r.mode === 'filter' ? 'inline-flex' : 'none') +
+    ';font-size:13px"><input type="checkbox" id="ldf-e-hard"' +
+    (r.shieldable === false ? ' checked' : '') +
+    '> 硬过滤（保护词也不能豁免）</label>' +
+    '</div><div class="ldf-hint">过滤 = 从列表移除（可勾选硬过滤）；保护高亮 = 永不误杀并标记颜色。</div></div>' +
     '<div class="ldf-field"><label>作用域（规则在哪些页面生效）</label><div class="ldf-inline">' +
     '<div class="ldf-seg"><label><input type="radio" name="ldf-e-scope" value="global"' +
     (scope.type === 'global' ? ' checked' : '') +
@@ -456,6 +462,8 @@ function bindEditor(): void {
     radio.addEventListener('change', () => {
       const wrap = box.querySelector<HTMLElement>('#ldf-e-color-wrap');
       if (wrap) wrap.style.display = radio.value === 'highlight' && radio.checked ? 'inline-flex' : 'none';
+      const hard = box.querySelector<HTMLElement>('#ldf-e-hard-wrap');
+      if (hard) hard.style.display = radio.value === 'filter' && radio.checked ? 'inline-flex' : 'none';
     });
   });
   box.querySelectorAll<HTMLInputElement>('input[name="ldf-e-scope"]').forEach((radio) => {
@@ -558,6 +566,9 @@ function saveEditor(): void {
   }
 
   const rule: Rule = { ...editing!, name, mode, color, when };
+  const hard = box.querySelector<HTMLInputElement>('#ldf-e-hard')?.checked === true;
+  if (mode === 'filter' && hard) rule.shieldable = false;
+  else delete rule.shieldable;
   if (scopeType === 'global') rule.scope = { type: 'global' };
   else if (scopeType === 'home') rule.scope = { type: 'home' };
   else rule.scope = { type: 'category', categoryIds: scopeCats, includeHome };

@@ -54,6 +54,26 @@ describe('保护优先', () => {
     const d = decide(mkTopic('分享一个纯水帖，但标题有分享和教程', '搞七捻三', ['纯水']), state, homePage, baseCtx);
     expect(d.kind).toBe('filter');
   });
+  it('自定义硬过滤规则不受保护词豁免，普通过滤规则会被保护词跳过', () => {
+    const hard: Rule = {
+      id: 'hard-custom',
+      name: '硬过滤',
+      mode: 'filter',
+      enabled: true,
+      shieldable: false,
+      when: { minAsk: 1 },
+    };
+    const soft: Rule = {
+      id: 'soft-custom',
+      name: '普通过滤',
+      mode: 'filter',
+      enabled: true,
+      when: { minAsk: 1 },
+    };
+    const title = '求推荐 开源项目 教程';
+    expect(decide(mkTopic(title, '开发调优', []), compileRules([hard], map), homePage, baseCtx).kind).toBe('filter');
+    expect(decide(mkTopic(title, '开发调优', []), compileRules([soft], map), homePage, baseCtx).kind).toBe('keep');
+  });
 });
 
 describe('短问句预设（默认关闭）', () => {
