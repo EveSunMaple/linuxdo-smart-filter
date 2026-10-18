@@ -11,6 +11,7 @@ const meta = `// ==UserScript==
 // @description  Filter low-value topics on linux.do by category/tags/title triage, with whitelist protection for quality posts
 // @description:zh-CN  按板块/标签/标题内容分诊过滤 linux.do 低信息量主题，优质帖保护高亮，支持预设与自定义规则
 // @author       EveSunMaple
+// @license      Apache-2.0
 // @match        https://linux.do/*
 // @run-at       document-start
 // @grant        GM_getValue
