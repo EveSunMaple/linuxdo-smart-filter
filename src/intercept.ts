@@ -206,6 +206,7 @@ function domPass(): void {
   if (!cfg.masterEnabled) return;
   const state = host.getState();
   if (!pageHasActiveRule(state, currentPage)) return;
+  if (!isFilterablePage(currentPage)) return;
   const bucket = buckets.get(currentPage.key);
   const hlMap = pageHighlights.get(currentPage.key);
   const decided = decidedFor(currentPage.key);
