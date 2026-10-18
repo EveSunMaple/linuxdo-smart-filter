@@ -177,5 +177,8 @@ export function installTopbarListeners(): void {
   };
   if (document.body) startObserving();
   else document.addEventListener('DOMContentLoaded', startObserving, { once: true });
-  setInterval(ensureTopbar, 3000);
+  setInterval(ensureTopbar, 15000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) ensureTopbar();
+  });
 }

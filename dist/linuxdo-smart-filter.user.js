@@ -2028,7 +2028,10 @@ tr.ldf-highlight .title { color: inherit; }
     };
     if (document.body) startObserving();
     else document.addEventListener("DOMContentLoaded", startObserving, { once: true });
-    setInterval(ensureTopbar, 3e3);
+    setInterval(ensureTopbar, 15e3);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) ensureTopbar();
+    });
   }
 
   // src/main.ts
